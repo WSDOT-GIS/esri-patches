@@ -1,11 +1,23 @@
 import bt from "bun:test";
 import {
   fetchPatches,
-  sumRe,
   versionRe,
   type Patch,
   type ProductItem,
 } from "../index.ts";
+
+import sampleResponse from "./sample-response.json" with { type: "json" };
+
+//@ts-expect-error
+globalThis.fetch = async () => {
+  return new Response(JSON.stringify(sampleResponse), {
+    headers: {
+      "Content-Type": "application/json",
+    },
+    status: 200,
+    statusText: "OK",
+  });
+}
 
 bt.describe.concurrent("fetchPatches", async () => {
   const queryResult = await fetchPatches();
@@ -37,10 +49,8 @@ bt.describe.concurrent("fetchPatches", async () => {
     for (const pn of sumsPropertyNames) {
       bt.expect(patch).toHaveProperty(pn);
       const v = patch[pn];
-      bt.expect(() => v === null || v instanceof Map);
+      bt.expect(() => v === null || v instanceof Map, `Expect ${pn} to be either a Map or null.`);
     }
-
-    // bt.expect(patch).
   }
 
   function testProduct(product: ProductItem) {
